@@ -1,0 +1,127 @@
+# Import datetime module to read date in the input files
+from datetime import datetime
+import os
+
+# Define a class DataFile to handle the input and output files
+# Can add more data source in the future (from SQL etc.)
+class DataFile:
+    # Define the constructor with the file path
+    def __init__(self, file_path):
+        self.file_path = file_path
+    
+    # Define a method to read the file
+    def readFile(self):
+        # Open the file in read mode
+        with open(self.file_path, 'r') as f:
+            # Read the first line of the file as header
+            header = f.readline().strip()
+            # Initialize the list to store the header
+            fileType = []
+            # Iterate through each character in header until reach "_" to get the file type
+            for char in header:
+                if char != '_':
+                    fileType.append(char)
+                else:
+                    break
+            # Convert the list of characters to a string
+            fileType = ''.join(fileType)
+            # Initialize the data list and read the remaining lines of the file            
+            if fileType == "Num":
+                # Convert the data to float and store in the data list
+                data = [float(line.strip()) for line in f]
+            elif fileType == "Str":
+                # Convert the data to lowercase and store in the data list
+                # String comparison can be case sensitive by removing .lower()
+                data = [line.strip().lower() for line in f]
+            elif fileType == "Date":
+                # Convert the data to datetime and store in the data list
+                data = [datetime.strptime(line.strip(), '%m/%d/%Y') for line in f]
+            # Get the length of the data list
+            dataLength = len(data)
+        # Return the file type, data length, and data list
+        return fileType,dataLength ,data
+    
+    # Define a method to write the file
+    def writeFile(self,data):
+        # Open the file in write mode
+        with open(self.file_path, 'w') as resultFile:
+            # Write the header based on the file type
+            resultFile.write("CompareResult\n")
+            # Write each line of the data list to the file
+            for line in data:
+                resultFile.write(str(line) + '\n')
+
+# Define the main function to compare the input files and write the output file
+def main (fileIn1,fileIn2,fileOut):
+    # Read the input files
+    fileType1, dataLength1, data1 = fileIn1.readFile()
+    fileType2, dataLength2, data2 = fileIn2.readFile()
+    # Define a function to compare the input files
+    def compareFiles():
+        # Check if the file types and data lengths are the same
+        if fileType1 != fileType2:
+            print("File types are different, Please compare files with the same data type")
+        if dataLength1 != dataLength2:
+            print("Data lengths are different, Please compare files with the same data length")
+        # Initialize the result list
+        else:
+            # Compare the data based on the file type
+            if fileType1 == "Num":
+                # Subtract the values of data2 from data1
+                myResultList = [float(data1[i]-data2[i]) for i in range(dataLength1)]
+            elif fileType1 == "Str":
+                # T if the values are the same, F if the values are different
+                myResultList = ["T" if data1[i] == data2[i] else "F" for i in range(dataLength1)]
+            elif fileType1 == "Date":
+                # Calculate the difference in months between the dates
+                # Can output the number of days between 2 dates by read .day and changing the formula
+                myResultList = [(data1[i].year - data2[i].year) * 12 + data1[i].month - data2[i].month for i in range(dataLength1)]
+        # Return the result list
+        return myResultList
+    
+    # Define a function to write the output file
+    def writeFile(fileOut):
+        # Call the compareFiles function to get the result list
+        result = compareFiles()
+        # Write the result list to the output file
+        fileOut.writeFile(result)
+        return result
+    
+    # Call the writeFile function to write the output file
+    ans = writeFile (fileOut)
+    # Print the comparison result
+    print("Comparison is successful and the data type is", fileType1, "with a total of", dataLength1, "data.")
+    print("Compare Result: ", ans)
+    print("The result is written to the output file, please check the output file for the comparison result.")
+
+if __name__ == "__main__":
+    # get the current directory
+    current_directory = os.path.dirname(__file__)
+    
+    # Define the paths to the input and output files by relative file paths
+    # Can modify the file path in the future to the desired location of the input and output files
+    # For example: input_file1_path = '/users/david/Downloads/INPUT_File1.txt'
+   
+    # Current input files are used for comparing numeric data types
+    input_file1_path = os.path.join(current_directory, 'INPUT_File1.txt')
+    input_file2_path = os.path.join(current_directory, 'INPUT_File2.txt')
+    
+    # For string comparison, remove line comments below to test
+    # input_file1_path = os.path.join(current_directory, 'INPUT_File3.txt') 
+    # input_file2_path = os.path.join(current_directory, 'INPUT_File4.txt') 
+
+    # For date comparison, remove line comments below to test
+    # input_file1_path = os.path.join(current_directory, 'INPUT_File5.txt') 
+    # input_file2_path = os.path.join(current_directory, 'INPUT_File6.txt')
+
+
+    # Define the path to the output file by relative file path
+    output_file_path = os.path.join(current_directory, 'output_file.txt')
+    
+    # Create DataFile instances using the provided paths
+    inputFile1 = DataFile(input_file1_path)
+    inputFile2 = DataFile(input_file2_path)
+    outputFile = DataFile(output_file_path)
+    
+    # Call the main function with the input and output file paths
+    main(inputFile1,inputFile2,outputFile)
